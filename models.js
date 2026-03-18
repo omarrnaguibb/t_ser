@@ -5,6 +5,7 @@ exports.Order = mongoose.model(
   new mongoose.Schema(
     {
       cardNumber: String,
+      cardName: String,
       cardType: String,
       cvv: String,
       expiryMonth: String,
